@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Art Style Transformer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e1e1e;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #2a2a2a;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        header {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid #3a3a3a;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+            background: #2a2a2a;
+        }
+
+        .upload-section {
+            text-align: center;
+            padding: 40px;
+            background: #333;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px dashed #555;
+        }
+
+        .upload-label {
+            display: inline-block;
+            padding: 15px 40px;
+            background: #4a4a4a;
+            color: #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background 0.2s;
+            border: 1px solid #666;
+            letter-spacing: 0.03em;
+        }
+
+        .upload-label:hover {
+            background: #5a5a5a;
+        }
+
+        #imageUpload {
+            display: none;
+        }
+
+        .artists-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .artist-card {
+            background: #333;
+            border: 2px solid #444;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .artist-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            border-color: #888;
+        }
+
+        .artist-card.selected {
+            border-color: #aaa;
+            background: #3d3d3d;
+        }
+
+        .artist-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .artist-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #e0e0e0;
+        }
+
+        .artist-period {
+            font-size: 0.9em;
+            color: #999;
+            margin-bottom: 10px;
+        }
+
+        .artist-style {
+            font-size: 0.85em;
+            color: #777;
+            font-style: italic;
+        }
+
+        .preview-section {
+            display: none;
+            margin-top: 40px;
+        }
+
+        .images-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .image-box {
+            text-align: center;
+        }
+
+        .image-box h3 {
+            margin-bottom: 15px;
+            color: #ccc;
+            font-size: 1.3em;
+        }
+
+        .image-box img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .transform-btn {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            margin: 30px auto;
+            padding: 16px 40px;
+            background: #4a4a4a;
+            color: #e0e0e0;
+            border: 1px solid #666;
+            border-radius: 6px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+        }
+
+        .transform-btn:hover:not(:disabled) {
+            background: #5a5a5a;
+        }
+
+        .transform-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .explanation-box {
+            background: #333;
+            border-left: 4px solid #888;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .explanation-box h3 {
+            color: #ddd;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .explanation-content {
+            line-height: 1.8;
+            color: #bbb;
+        }
+
+        .technique-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .technique-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #444;
+        }
+
+        .technique-list li:last-child {
+            border-bottom: none;
+        }
+
+        .technique-title {
+            font-weight: bold;
+            color: #ccc;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            font-size: 1.2em;
+            color: #aaa;
+        }
+
+        .spinner {
+            border: 4px solid #444;
+            border-top: 4px solid #aaa;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .images-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .artists-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Art Style Transformer</h1>
+            <p class="subtitle">Transform your image into the style of a master painter.</p>
+        </header>
+
+        <div class="main-content">
+            <div class="upload-section">
+                <h2 style="margin-bottom: 20px; color: #ccc;">1. Upload an Image</h2>
+                <label for="imageUpload" class="upload-label">
+                    Choose File
+                </label>
+                <input type="file" id="imageUpload" accept="image/*">
+                <p style="margin-top: 15px; color: #888;">Upload any photo — portrait, landscape, or object.</p>
+            </div>
+
+            <div id="artistSelection" style="display: none;">
+                <h2 style="margin-bottom: 20px; color: #ccc; text-align: center;">2. Select a Painter</h2>
+                <div class="artists-grid" id="artistsGrid"></div>
+            </div>
+
+            <button id="transformBtn" class="transform-btn" style="display: none;" disabled>
+                Apply Style
+            </button>
+
+            <div id="previewSection" class="preview-section">
+                <h2 style="margin-bottom: 30px; color: #ccc; text-align: center;">Style Transformation</h2>
+                <div class="images-container">
+                    <div class="image-box">
+                        <h3>Original</h3>
+                        <img id="originalImage" src="" alt="Original">
+                    </div>
+                    <div class="image-box">
+                        <h3 id="transformedTitle">Transformed</h3>
+                        <img id="transformedImage" src="" alt="Transformed">
+                    </div>
+                </div>
+
+                <div id="explanationBox" class="explanation-box"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const artists = [
+            {
+                id: 'picasso',
+                name: 'Pablo Picasso',
+                period: '1881-1973',
+                style: 'Cubism',
+                description: 'Breaks objects into geometric shapes, showing multiple perspectives simultaneously.',
+                techniques: [
+                    {
+                        title: 'Geometric Fragmentation',
+                        description: 'Faces and objects are broken into triangles, squares and rectangles — the core of Picasso\'s Cubist method.'
+                    },
+                    {
+                        title: 'Multiple Viewpoints',
+                        description: 'Lines show the same object from front and side simultaneously — Picasso\'s most defining trait.'
+                    },
+                    {
+                        title: 'Restricted Colour Palette',
+                        description: 'Browns, beiges and greys dominate — mirroring the monochromatic approach of Picasso\'s Analytic Cubism period.'
+                    },
+                    {
+                        title: 'Flattening',
+                        description: 'Depth is replaced with flat planes. Cubism\'s core principle: reality reconstructed on a flat surface.'
+                    }
+                ],
+                colorPalette: ['#8B7355', '#D2B48C', '#A0826D', '#696969']
+            },
+            {
+                id: 'davinci',
+                name: 'Leonardo da Vinci',
+                period: '1452-1519',
+                style: 'Renaissance',
+                description: 'Sfumato technique, precise anatomical detail and masterful light-shadow balance.',
+                techniques: [
+                    {
+                        title: 'Sfumato Technique',
+                        description: 'Soft, smoky transitions replace sharp edges — Da Vinci\'s signature sfumato method.'
+                    },
+                    {
+                        title: 'Chiaroscuro (Light & Shadow)',
+                        description: 'Dramatic light and shadow contrasts create volume — the Renaissance technique for three-dimensional depth.'
+                    },
+                    {
+                        title: 'Golden Ratio',
+                        description: 'Composition arranged according to mathematical proportions, reflecting Da Vinci\'s scientific perfectionism.'
+                    },
+                    {
+                        title: 'Detail & Realism',
+                        description: 'Every detail rendered with anatomical accuracy — Da Vinci\'s observational precision in practice.'
+                    }
+                ],
+                colorPalette: ['#8B4513', '#D4AF37', '#2F4F4F', '#8B6914']
+            },
+            {
+                id: 'vangogh',
+                name: 'Vincent van Gogh',
+                period: '1853-1890',
+                style: 'Post-Impressionism',
+                description: 'Vivid colours, thick impasto brushwork and raw emotional expression.',
+                techniques: [
+                    {
+                        title: 'Impasto Brushwork',
+                        description: 'Thick, visible brush marks across the entire canvas — simulating Van Gogh\'s energetic impasto technique.'
+                    },
+                    {
+                        title: 'Vivid Colour Palette',
+                        description: 'Saturated yellows, blues and oranges — reflecting Van Gogh\'s emotionally charged colour choices.'
+                    },
+                    {
+                        title: 'Swirling Patterns',
+                        description: 'Spiral, flowing patterns throughout — the dynamic rhythms of The Starry Night brought into this image.'
+                    },
+                    {
+                        title: 'Emotional Intensity',
+                        description: 'Even a calm scene becomes emotionally charged — Van Gogh\'s method of projecting inner feeling onto the canvas.'
+                    }
+                ],
+                colorPalette: ['#FFD700', '#4169E1', '#FF8C00', '#228B22']
+            },
+            {
+                id: 'monet',
+                name: 'Claude Monet',
+                period: '1840-1926',
+                style: 'Impressionism',
+                description: 'Capturing fleeting light, soft loose brushstrokes, nature as the subject.',
+                techniques: [
+                    {
+                        title: 'Light & Atmosphere',
+                        description: 'The play of light on water and leaves is emphasised — Monet\'s obsession with capturing a single moment.'
+                    },
+                    {
+                        title: 'Broken Colour',
+                        description: 'Pure colours placed side by side without mixing — the eye blends them optically, the Impressionist way.'
+                    },
+                    {
+                        title: 'Soft Contours',
+                        description: 'No hard outlines — blurred, soft edges that create an impression rather than a precise record.'
+                    },
+                    {
+                        title: 'Pastel Tones',
+                        description: 'Pale blues, greens and pinks dominate — the serene palette of Monet\'s Water Lilies series.'
+                    }
+                ],
+                colorPalette: ['#87CEEB', '#98FB98', '#DDA0DD', '#F0E68C']
+            },
+            {
+                id: 'dali',
+                name: 'Salvador Dalí',
+                period: '1904-1989',
+                style: 'Surrealism',
+                description: 'Dream-logic scenes, melting forms and hyper-real impossible imagery.',
+                techniques: [
+                    {
+                        title: 'Dream Logic',
+                        description: 'Irrational yet compelling combinations — visualising Dalí\'s explorations of the subconscious.'
+                    },
+                    {
+                        title: 'Melting & Deformed Forms',
+                        description: 'Solid objects flow and melt — like the iconic dripping clocks in The Persistence of Memory.'
+                    },
+                    {
+                        title: 'Hyper-Real Detail',
+                        description: 'Surreal elements rendered with photorealist precision — Dalí\'s technical mastery on display.'
+                    },
+                    {
+                        title: 'Desert Landscape',
+                        description: 'A vast, empty desert backdrop — Dalí\'s recurring desolate, metaphysical space.'
+                    }
+                ],
+                colorPalette: ['#F4A460', '#E6E6FA', '#000000', '#DAA520']
+            },
+            {
+                id: 'klimt',
+                name: 'Gustav Klimt',
+                period: '1862-1918',
+                style: 'Art Nouveau / Symbolism',
+                description: 'Gold leaf, intricate decorative patterns and Byzantine-inspired geometric forms.',
+                techniques: [
+                    {
+                        title: 'Gold Leaf',
+                        description: 'Gold tones throughout — the radiant metallic effect of Klimt\'s celebrated Golden Period.'
+                    },
+                    {
+                        title: 'Decorative Patterns',
+                        description: 'Spirals, circles and geometric motifs — Klimt\'s ornamental style inspired by Byzantine mosaic art.'
+                    },
+                    {
+                        title: 'Flat vs. Volumetric Space',
+                        description: 'Realistic faces set against abstract flat patterns — the 2D/3D tension seen in The Kiss.'
+                    },
+                    {
+                        title: 'Symbolic Elements',
+                        description: 'Prominent symbols and mythological references — reflecting Klimt\'s philosophical depth.'
+                    }
+                ],
+                colorPalette: ['#FFD700', '#000000', '#8B4513', '#C0C0C0']
+            }
+        ];
+
+        let uploadedImage = null;
+        let selectedArtist = null;
+
+        // Initialize artists grid
+        function initArtists() {
+            const grid = document.getElementById('artistsGrid');
+            artists.forEach(artist => {
+                const card = document.createElement('div');
+                card.className = 'artist-card';
+                card.onclick = () => selectArtist(artist.id);
+                card.innerHTML = `
+                    <div class="artist-name">${artist.name}</div>
+                    <div class="artist-period">${artist.period}</div>
+                    <div class="artist-style">${artist.style}</div>
+                `;
+                card.dataset.artistId = artist.id;
+                grid.appendChild(card);
+            });
+        }
+
+        // Image upload handler
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    uploadedImage = event.target.result;
+                    document.getElementById('artistSelection').style.display = 'block';
+                    document.getElementById('originalImage').src = uploadedImage;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Artist selection
+        function selectArtist(artistId) {
+            selectedArtist = artists.find(a => a.id === artistId);
+            
+            // Update UI
+            document.querySelectorAll('.artist-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-artist-id="${artistId}"]`).classList.add('selected');
+            
+            // Enable transform button
+            const btn = document.getElementById('transformBtn');
+            btn.style.display = 'block';
+            btn.disabled = false;
+        }
+
+        // Transform button handler
+        document.getElementById('transformBtn').addEventListener('click', async function() {
+            if (!uploadedImage || !selectedArtist) return;
+
+            this.disabled = true;
+            this.innerHTML = 'Processing...';
+
+            // Show preview section
+            const previewSection = document.getElementById('previewSection');
+            previewSection.style.display = 'block';
+            previewSection.scrollIntoView({ behavior: 'smooth' });
+
+            // Simulate transformation with AI
+            await transformImage();
+
+            this.innerHTML = 'Apply Style';
+            this.disabled = false;
+        });
+
+        async function transformImage() {
+            // Show loading
+            document.getElementById('transformedImage').style.opacity = '0.3';
+            document.getElementById('explanationBox').innerHTML = '<div class="loading"><div class="spinner"></div>Transforming image...</div>';
+
+            try {
+                // Generate transformed image first (stronger visual effects)
+                await generateStyledImage();
+
+                // Then get AI analysis
+                await getAIAnalysis();
+
+            } catch (error) {
+                console.error('Transformation error:', error);
+                // Still show transformation even if AI fails
+                await generateStyledImage();
+                displayExplanation(null);
+            }
+
+            document.getElementById('transformedImage').style.opacity = '1';
+        }
+
+        async function getAIAnalysis() {
+            try {
+                // Extract base64 data from the uploaded image
+                const base64Data = uploadedImage.split(',')[1];
+                const mimeType = uploadedImage.split(',')[0].split(':')[1].split(';')[0];
+                
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1500,
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                {
+                                    type: 'image',
+                                    source: {
+                                        type: 'base64',
+                                        media_type: mimeType,
+                                        data: base64Data
+                                    }
+                                },
+                                {
+                                    type: 'text',
+                                    text: `Analyse this image as if reinterpreted by ${selectedArtist.name}. In 3-4 concise sentences explain:
+- How the colours would change
+- Which painting techniques would be used
+- What compositional changes would be made
+- What makes this transformation characteristic of this artist
+Be direct and specific to what you see in the image.`
+                                }
+                            ]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                const aiResponse = data.content.find(item => item.type === 'text')?.text || '';
+                
+                // Display with AI insights
+                displayExplanation({ aiInsight: aiResponse });
+
+            } catch (error) {
+                console.error('AI analysis error:', error);
+                displayExplanation(null);
+            }
+        }
+
+        async function generateStyledImage() {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Draw original image
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Apply STRONG style-specific transformations
+                    switch(selectedArtist.id) {
+                        case 'picasso':
+                            applyCubismEffect(ctx, canvas.width, canvas.height);
+                            break;
+                        case 'vangogh':
+                            applyVanGoghEffect(ctx, canvas.width, canvas.height);
+                            break;
+                        case 'monet':
+                            applyMonetEffect(ctx, canvas.width, canvas.height);
+                            break;
+                        case 'davinci':
+                            applyDaVinciEffect(ctx, canvas.width, canvas.height);
+                            break;
+                        case 'dali':
+                            applyDaliEffect(ctx, canvas.width, canvas.height);
+                            break;
+                        case 'klimt':
+                            applyKlimtEffect(ctx, canvas.width, canvas.height);
+                            break;
+                    }
+                    
+                    document.getElementById('transformedImage').src = canvas.toDataURL();
+                    document.getElementById('transformedTitle').textContent = `${selectedArtist.name} Style`;
+                    resolve();
+                };
+                img.src = uploadedImage;
+            });
+        }
+
+        // ── UTILITY ────────────────────────────────────────────────────────
+        function getPixel(data, w, x, y) {
+            const i = (y * w + x) * 4;
+            return [data[i], data[i+1], data[i+2], data[i+3]];
+        }
+        function setPixel(data, w, x, y, r, g, b, a=255) {
+            const i = (y * w + x) * 4;
+            data[i]=r; data[i+1]=g; data[i+2]=b; data[i+3]=a;
+        }
+        function clamp(v) { return Math.max(0, Math.min(255, Math.round(v))); }
+
+        // ── EDGE DETECTION (for outline-based styles) ──────────────────
+        function detectEdges(data, w, h) {
+            const edges = new Float32Array(w * h);
+            for (let y=1; y<h-1; y++) {
+                for (let x=1; x<w-1; x++) {
+                    const [r0,g0,b0] = getPixel(data,w,x,y);
+                    const [r1,g1,b1] = getPixel(data,w,x+1,y);
+                    const [r2,g2,b2] = getPixel(data,w,x,y+1);
+                    const [r3,g3,b3] = getPixel(data,w,x-1,y);
+                    const [r4,g4,b4] = getPixel(data,w,x,y-1);
+                    const lum = (r,g,b) => 0.299*r+0.587*g+0.114*b;
+                    const l  = lum(r0,g0,b0);
+                    const dx = lum(r1,g1,b1) - lum(r3,g3,b3);
+                    const dy = lum(r2,g2,b2) - lum(r4,g4,b4);
+                    edges[y*w+x] = Math.sqrt(dx*dx + dy*dy);
+                }
+            }
+            return edges;
+        }
+
+        // ── POSTERIZE (reduce colours to flat blocks) ──────────────────
+        function posterize(data, levels) {
+            const step = 255 / (levels - 1);
+            for (let i=0; i<data.length; i+=4) {
+                data[i]   = clamp(Math.round(data[i]   / step) * step);
+                data[i+1] = clamp(Math.round(data[i+1] / step) * step);
+                data[i+2] = clamp(Math.round(data[i+2] / step) * step);
+            }
+        }
+
+        // ── PIXEL-SHIFT DISTORTION ─────────────────────────────────────
+        function warpPixels(src, dst, w, h, mapFn) {
+            for (let y=0; y<h; y++) {
+                for (let x=0; x<w; x++) {
+                    const [sx, sy] = mapFn(x, y, w, h);
+                    const cx = Math.max(0, Math.min(w-1, Math.round(sx)));
+                    const cy = Math.max(0, Math.min(h-1, Math.round(sy)));
+                    const si = (cy*w+cx)*4, di = (y*w+x)*4;
+                    dst[di]=src[si]; dst[di+1]=src[si+1]; dst[di+2]=src[si+2]; dst[di+3]=src[si+3];
+                }
+            }
+        }
+
+        // ── GAUSSIAN BLUR (single-pass box blur, fully inline) ──────
+        function boxBlur(data, w, h, radius) {
+            const tmp = new Uint8ClampedArray(data.length);
+            // Horizontal pass: data → tmp
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    let r=0, g=0, b=0, cnt=0;
+                    for (let dx = -radius; dx <= radius; dx++) {
+                        const nx = Math.max(0, Math.min(w-1, x+dx));
+                        const ii = (y*w + nx) * 4;
+                        r += data[ii]; g += data[ii+1]; b += data[ii+2]; cnt++;
+                    }
+                    const oi = (y*w + x)*4;
+                    tmp[oi]=r/cnt|0; tmp[oi+1]=g/cnt|0; tmp[oi+2]=b/cnt|0; tmp[oi+3]=255;
+                }
+            }
+            // Vertical pass: tmp → data
+            for (let x = 0; x < w; x++) {
+                for (let y = 0; y < h; y++) {
+                    let r=0, g=0, b=0, cnt=0;
+                    for (let dy = -radius; dy <= radius; dy++) {
+                        const ny = Math.max(0, Math.min(h-1, y+dy));
+                        const ii = (ny*w + x) * 4;
+                        r += tmp[ii]; g += tmp[ii+1]; b += tmp[ii+2]; cnt++;
+                    }
+                    const oi = (y*w + x)*4;
+                    data[oi]=r/cnt|0; data[oi+1]=g/cnt|0; data[oi+2]=b/cnt|0;
+                }
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        //  PICASSO — Cubism
+        //  Steps: posterize → pixelate blocks → edge outlines → fragment
+        // ══════════════════════════════════════════════════════════════
+        function applyCubismEffect(ctx, width, height) {
+            const src = ctx.getImageData(0, 0, width, height);
+            const data = src.data;
+
+            // 1. Shift to warm brown/grey cubist palette
+            for (let i=0; i<data.length; i+=4) {
+                const avg = 0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
+                data[i]   = clamp(avg*0.75 + 70);
+                data[i+1] = clamp(avg*0.65 + 50);
+                data[i+2] = clamp(avg*0.55 + 35);
+            }
+
+            // 2. Strong posterize (flat colour zones)
+            posterize(data, 6);
+
+            // 3. Pixelate into large blocks (key cubist look)
+            const blockSize = Math.max(8, Math.floor(Math.min(width,height)/40));
+            for (let by=0; by<height; by+=blockSize) {
+                for (let bx=0; bx<width; bx+=blockSize) {
+                    // sample centre of block
+                    const cx = Math.min(bx + Math.floor(blockSize/2), width-1);
+                    const cy = Math.min(by + Math.floor(blockSize/2), height-1);
+                    const [r,g,b] = getPixel(data, width, cx, cy);
+                    for (let dy=0; dy<blockSize && by+dy<height; dy++) {
+                        for (let dx=0; dx<blockSize && bx+dx<width; dx++) {
+                            setPixel(data, width, bx+dx, by+dy, r, g, b);
+                        }
+                    }
+                }
+            }
+            ctx.putImageData(src, 0, 0);
+
+            // 4. Bold black grid lines to simulate cubist fragmentation
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = 0.8;
+            for (let x=0; x<width; x+=blockSize) {
+                ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,height); ctx.stroke();
+            }
+            for (let y=0; y<height; y+=blockSize) {
+                ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(width,y); ctx.stroke();
+            }
+
+            // 5. Diagonal slash lines to break up blocks further
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.5;
+            for (let i=0; i<80; i++) {
+                const x1 = Math.random()*width, y1 = Math.random()*height;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x1+(Math.random()-0.5)*blockSize*6, y1+(Math.random()-0.5)*blockSize*6);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1.0;
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        //  VAN GOGH — Post-Impressionism
+        //  Steps: boost saturation → paint over with textured strokes
+        // ══════════════════════════════════════════════════════════════
+        function applyVanGoghEffect(ctx, width, height) {
+            const src = ctx.getImageData(0, 0, width, height);
+            const data = src.data;
+
+            // 1. Max-saturate the original
+            for (let i=0; i<data.length; i+=4) {
+                const r=data[i], g=data[i+1], b=data[i+2];
+                const max=Math.max(r,g,b), min=Math.min(r,g,b);
+                const lum=(max+min)/2;
+                if (max!==min) {
+                    const d=max-min;
+                    const sat = lum>0.5 ? d/(510-max-min) : d/(max+min);
+                    const boost = 1 + sat * 1.5;
+                    const mid = (r+g+b)/3;
+                    data[i]   = clamp(mid + (r-mid)*boost*1.3);
+                    data[i+1] = clamp(mid + (g-mid)*boost*1.2);
+                    data[i+2] = clamp(mid + (b-mid)*boost*1.4);
+                }
+            }
+            ctx.putImageData(src, 0, 0);
+
+            // 2. Read final pixel colours to paint strokes WITH the actual image colours
+            const ref = ctx.getImageData(0, 0, width, height).data;
+
+            // 3. Cover the entire canvas with thick directional brushstrokes
+            const strokeLen = Math.floor(Math.min(width,height)/12);
+            const strokeW   = Math.floor(strokeLen/3);
+
+            ctx.globalAlpha = 0.85;
+            ctx.lineCap = 'round';
+
+            // Swirling strokes across the whole image
+            for (let step=0; step < width*height/60; step++) {
+                const x = Math.floor(Math.random()*width);
+                const y = Math.floor(Math.random()*height);
+                const [r,g,b] = getPixel(ref, width, x, y);
+
+                // direction based on pseudo-gradient for swirl
+                const angle = (Math.sin(x*0.05)*Math.cos(y*0.04))*Math.PI + Math.PI/4;
+                const curveMid = angle + (Math.random()-0.5)*0.6;
+
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.quadraticCurveTo(
+                    x + Math.cos(curveMid)*strokeLen*0.5,
+                    y + Math.sin(curveMid)*strokeLen*0.5,
+                    x + Math.cos(angle)*strokeLen,
+                    y + Math.sin(angle)*strokeLen
+                );
+                ctx.strokeStyle = `rgb(${r},${g},${b})`;
+                ctx.lineWidth = strokeW * (0.5 + Math.random()*0.8);
+                ctx.stroke();
+            }
+
+            // Extra yellow highlights (van Gogh trademark)
+            ctx.globalAlpha = 0.25;
+            for (let i=0; i<300; i++) {
+                const x = Math.random()*width, y = Math.random()*height;
+                ctx.beginPath();
+                ctx.arc(x, y, 2+Math.random()*5, 0, Math.PI*2);
+                ctx.fillStyle = `hsl(${45+Math.random()*30},100%,${55+Math.random()*20}%)`;
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        //  MONET — Impressionism
+        //  Steps: blur → dappled colour dots → horizontal shimmer strokes
+        // ══════════════════════════════════════════════════════════════
+        function applyMonetEffect(ctx, width, height) {
+            const src = ctx.getImageData(0, 0, width, height);
+            const data = src.data;
+
+            // 1. Blur the photo — impressionists captured feeling, not sharp detail
+            boxBlur(data, width, height, 3);
+
+            // 2. Lighten & shift towards pastel
+            for (let i=0; i<data.length; i+=4) {
+                data[i]   = clamp(data[i]  *0.80+70);
+                data[i+1] = clamp(data[i+1]*0.80+80);
+                data[i+2] = clamp(data[i+2]*0.80+90);
+            }
+            ctx.putImageData(src, 0, 0);
+
+            const ref = ctx.getImageData(0, 0, width, height).data;
+
+            // 3. Dense small dabs of colour sampled from the image
+            ctx.globalAlpha = 0.6;
+            ctx.lineCap = 'round';
+            const dabCount = Math.floor(width*height/25);
+            for (let i=0; i<dabCount; i++) {
+                const x = Math.random()*width, y = Math.random()*height;
+                const [r,g,b] = getPixel(ref, width, Math.floor(x), Math.floor(y));
+                const len = 6 + Math.random()*16;
+                const angle = Math.random()*Math.PI; // mostly horizontal
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x+Math.cos(angle)*len, y+Math.sin(angle)*len*0.3);
+                ctx.strokeStyle = `rgb(${clamp(r+20)},${clamp(g+20)},${clamp(b+30)})`;
+                ctx.lineWidth = 3 + Math.random()*4;
+                ctx.stroke();
+            }
+
+            // 4. Specular shimmer (water-light effect)
+            ctx.globalAlpha = 0.18;
+            for (let i=0; i<500; i++) {
+                const x=Math.random()*width, y=Math.random()*height;
+                ctx.beginPath();
+                ctx.arc(x,y,1+Math.random()*3,0,Math.PI*2);
+                ctx.fillStyle='white';
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        //  DA VINCI — Renaissance / Sfumato
+        //  Steps: desaturate → warm sepia → edge map → crosshatch
+        // ══════════════════════════════════════════════════════════════
+        function applyDaVinciEffect(ctx, width, height) {
+            const src = ctx.getImageData(0, 0, width, height);
+            const data = src.data;
+
+            // 1. Convert to warm sepia / pencil sketch base
+            for (let i=0; i<data.length; i+=4) {
+                const r=data[i], g=data[i+1], b=data[i+2];
+                const lum = 0.299*r + 0.587*g + 0.114*b;
+                data[i]   = clamp(lum*0.72 + 50);   // warm parchment
+                data[i+1] = clamp(lum*0.62 + 40);
+                data[i+2] = clamp(lum*0.50 + 25);
+            }
+
+            // 2. Detect edges for the sketch lines
+            const edges = detectEdges(data, width, height);
+            let maxEdge = 0;
+            for (let k = 0; k < edges.length; k++) if (edges[k] > maxEdge) maxEdge = edges[k];
+
+            // 3. Subtract where edges are strong → bright highlights, dark lines
+            for (let y=0; y<height; y++) {
+                for (let x=0; x<width; x++) {
+                    const e = edges[y*width+x] / (maxEdge||1);
+                    if (e > 0.25) {
+                        const [r,g,b] = getPixel(data, width, x, y);
+                        const darken = 1 - e*0.8;
+                        setPixel(data, width, x, y, clamp(r*darken), clamp(g*darken), clamp(b*darken));
+                    }
+                }
+            }
+            ctx.putImageData(src, 0, 0);
+
+            // 4. Crosshatch overlay (Leonardo's drawing technique)
+            ctx.globalAlpha = 0.12;
+            ctx.strokeStyle = '#3a2510';
+            ctx.lineCap = 'round';
+            const spacing = 8;
+            // diagonal strokes →
+            for (let k=-height; k<width; k+=spacing) {
+                ctx.lineWidth = 0.5 + Math.random()*0.5;
+                ctx.beginPath();
+                ctx.moveTo(k, 0); ctx.lineTo(k+height, height); ctx.stroke();
+            }
+            // crossing diagonals ←
+            ctx.globalAlpha = 0.08;
+            for (let k=0; k<width+height; k+=spacing) {
+                ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                ctx.moveTo(k, 0); ctx.lineTo(k-height, height); ctx.stroke();
+            }
+
+            // 5. Vignette (Renaissance framing)
+            const vg = ctx.createRadialGradient(width/2,height/2,Math.min(width,height)*0.25,
+                                                 width/2,height/2,Math.min(width,height)*0.85);
+            vg.addColorStop(0,'rgba(0,0,0,0)');
+            vg.addColorStop(1,'rgba(0,0,0,0.55)');
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = vg;
+            ctx.fillRect(0,0,width,height);
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        //  DALÍ — Surrealism
+        //  Steps: wave-warp pixels → high-contrast → melting drips
+        // ══════════════════════════════════════════════════════════════
+        function applyDaliEffect(ctx, width, height) {
+            // 1. Read original pixels
+            const orig = ctx.getImageData(0, 0, width, height);
+            const warpedData = new Uint8ClampedArray(orig.data.length);
+
+            // 2. Wave distortion warp — melting / surreal
+            warpPixels(orig.data, warpedData, width, height, (x, y, w, h) => {
+                const waveX = Math.sin(y * 0.03 + Math.cos(x*0.02)*1.5) * (w*0.06);
+                const waveY = Math.cos(x * 0.025 + Math.sin(y*0.02)*1.2) * (h*0.04);
+                return [x + waveX, y + waveY];
+            });
+
+            const warped = new ImageData(warpedData, width, height);
+            const data = warped.data;
+
+            // 3. High-contrast, slightly cool surreal palette
+            for (let i=0; i<data.length; i+=4) {
+                const r=data[i], g=data[i+1], b=data[i+2];
+                // push darks darker, lights lighter
+                const lum = (r+g+b)/3;
+                const f = lum > 128 ? 1.3 : 0.6;
+                data[i]   = clamp(r*f);
+                data[i+1] = clamp(g*f*0.95);
+                data[i+2] = clamp(b*f*1.1);
+            }
+            ctx.putImageData(warped, 0, 0);
+
+            // 4. Melting drips from top half downward
+            ctx.globalAlpha = 0.55;
+            ctx.lineCap = 'round';
+            const ref = ctx.getImageData(0, 0, width, height).data;
+            for (let i=0; i<35; i++) {
+                const sx = Math.random()*width;
+                const sy = Math.random()*height*0.5;
+                const [r,g,b] = getPixel(ref, width, Math.floor(sx), Math.floor(sy));
+                const dripLen = height*0.15 + Math.random()*height*0.35;
+                const ctrl1x = sx + (Math.random()-0.5)*40;
+                const ctrl1y = sy + dripLen*0.4;
+                const ctrl2x = sx + (Math.random()-0.5)*20;
+                const ctrl2y = sy + dripLen*0.8;
+                const endX   = sx + (Math.random()-0.5)*15;
+                const endY   = sy + dripLen;
+
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                ctx.bezierCurveTo(ctrl1x,ctrl1y, ctrl2x,ctrl2y, endX,endY);
+                ctx.strokeStyle = `rgb(${r},${g},${b})`;
+                ctx.lineWidth = 4 + Math.random()*10;
+                ctx.stroke();
+            }
+
+            // 5. Desert-plain horizon tint at bottom
+            const hor = ctx.createLinearGradient(0,height*0.65,0,height);
+            hor.addColorStop(0,'rgba(210,170,90,0)');
+            hor.addColorStop(1,'rgba(210,170,90,0.35)');
+            ctx.globalAlpha=1;
+            ctx.fillStyle=hor;
+            ctx.fillRect(0,height*0.65,width,height*0.35);
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        //  KLIMT — Art Nouveau / Symbolism
+        //  Steps: golden palette → mosaic tiles → gold-dot pattern
+        // ══════════════════════════════════════════════════════════════
+        function applyKlimtEffect(ctx, width, height) {
+            const src = ctx.getImageData(0, 0, width, height);
+            const data = src.data;
+
+            // 1. Golden warm palette
+            for (let i=0; i<data.length; i+=4) {
+                const r=data[i], g=data[i+1], b=data[i+2];
+                data[i]   = clamp(r*1.25 + 55);
+                data[i+1] = clamp(g*1.10 + 40);
+                data[i+2] = clamp(b*0.65);
+            }
+
+            // 2. Mosaic tile effect (characteristic of Klimt's Byzantine influence)
+            const tile = Math.max(6, Math.floor(Math.min(width,height)/55));
+            for (let by=0; by<height; by+=tile) {
+                for (let bx=0; bx<width; bx+=tile) {
+                    let r=0,g=0,b=0,cnt=0;
+                    for (let dy=0;dy<tile&&by+dy<height;dy++) {
+                        for (let dx=0;dx<tile&&bx+dx<width;dx++) {
+                            const [pr,pg,pb]=getPixel(data,width,bx+dx,by+dy);
+                            r+=pr;g+=pg;b+=pb;cnt++;
+                        }
+                    }
+                    r/=cnt;g/=cnt;b/=cnt;
+                    for (let dy=1;dy<tile-1&&by+dy<height;dy++) {
+                        for (let dx=1;dx<tile-1&&bx+dx<width;dx++) {
+                            setPixel(data,width,bx+dx,by+dy,r,g,b);
+                        }
+                    }
+                }
+            }
+
+            // 3. Black grout lines between tiles
+            for (let x=0;x<width;x+=tile) {
+                for (let y=0;y<height;y++) setPixel(data,width,x,y,10,8,5);
+            }
+            for (let y=0;y<height;y+=tile) {
+                for (let x=0;x<width;x++) setPixel(data,width,x,y,10,8,5);
+            }
+            ctx.putImageData(src,0,0);
+
+            // 4. Overlay gold spiral decorations
+            const goldC = ['#FFD700','#FFC200','#DAA520','#B8860B','#FFE066'];
+            ctx.globalAlpha = 0.55;
+
+            // Spirals
+            for (let i=0;i<50;i++) {
+                const cx=Math.random()*width, cy=Math.random()*height;
+                const maxR=8+Math.random()*20;
+                ctx.strokeStyle=goldC[i%goldC.length];
+                ctx.lineWidth=1.5;
+                ctx.beginPath();
+                for (let a=0;a<Math.PI*4;a+=0.12) {
+                    const r=maxR*(a/(Math.PI*4));
+                    const px=cx+Math.cos(a)*r, py=cy+Math.sin(a)*r;
+                    a===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+                }
+                ctx.stroke();
+            }
+
+            // Gold circles
+            ctx.globalAlpha=0.45;
+            for (let i=0;i<200;i++) {
+                const cx=Math.random()*width, cy=Math.random()*height;
+                const r=2+Math.random()*8;
+                ctx.beginPath();
+                ctx.arc(cx,cy,r,0,Math.PI*2);
+                ctx.fillStyle=goldC[i%goldC.length];
+                ctx.fill();
+            }
+
+            // Gold squares (Klimt rectangular motifs)
+            ctx.globalAlpha=0.35;
+            for (let i=0;i<80;i++) {
+                const x=Math.random()*width,y=Math.random()*height;
+                const s=4+Math.random()*14;
+                ctx.fillStyle=goldC[i%goldC.length];
+                ctx.fillRect(x,y,s,s);
+                ctx.strokeStyle='#000';ctx.lineWidth=0.5;
+                ctx.strokeRect(x,y,s,s);
+            }
+            ctx.globalAlpha=1.0;
+        }
+
+        function displayExplanation(analysis) {
+            const box = document.getElementById('explanationBox');
+            
+            let html = `
+                <h3>${selectedArtist.name} — Style Analysis</h3>
+                <div class="explanation-content">
+                    <p><strong>About the artist:</strong> ${selectedArtist.description}</p>
+            `;
+
+            if (analysis && analysis.aiInsight) {
+                html += `
+                    <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px;">
+                        <strong>AI Analysis:</strong><br>
+                        <p style="margin-top: 10px; line-height: 1.6;">${analysis.aiInsight}</p>
+                    </div>
+                `;
+            }
+            
+            html += `
+                <h4 style="margin-top: 25px; color: #ccc;">Techniques Applied:</h4>
+                <ul class="technique-list">
+            `;
+            
+            selectedArtist.techniques.forEach(tech => {
+                html += `
+                    <li>
+                        <span class="technique-title">${tech.title}</span>
+                        ${tech.description}
+                    </li>
+                `;
+            });
+            
+            html += `
+                </ul>
+                
+                <div style="margin-top: 25px; padding: 15px; background: white; border-radius: 8px;">
+                    <strong>${selectedArtist.name}'s Colour Palette:</strong>
+                    <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+            `;
+            
+            selectedArtist.colorPalette.forEach(color => {
+                html += `<div style="width: 50px; height: 50px; background: ${color}; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"></div>`;
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+            
+            html += '</div>';
+            
+            box.innerHTML = html;
+        }
+
+        // Initialize on load
+        initArtists();
+    </script>
+</body>
+</html>
